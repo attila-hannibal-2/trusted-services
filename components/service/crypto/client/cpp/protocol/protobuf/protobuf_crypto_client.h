@@ -17,8 +17,7 @@
 class protobuf_crypto_client : public crypto_client
 {
 public:
-	protobuf_crypto_client();
-	protobuf_crypto_client(struct rpc_caller_session *session);
+	protobuf_crypto_client(rpc_caller_session *session = NULL);
 	virtual ~protobuf_crypto_client();
 
 	/* Key lifecycle methods */

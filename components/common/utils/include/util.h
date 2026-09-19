@@ -163,4 +163,6 @@ static inline void reg_pair_from_64(uint64_t val, uint32_t *reg0,
 }
 #endif
 
+#define UNUSED_VAR(x) (void)(x)
+
 #endif /*UTIL_H*/

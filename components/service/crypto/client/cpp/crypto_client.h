@@ -21,7 +21,7 @@ public:
 	virtual ~crypto_client();
 
 	int err_rpc_status() const;
-	struct service_info get_service_info() const;
+	service_info get_service_info() const;
 
 	/* Key lifecycle methods */
 	virtual psa_status_t generate_key(
@@ -245,11 +245,10 @@ public:
 						       uint8_t *output) = 0;
 
 protected:
-	crypto_client();
-	crypto_client(struct rpc_caller_session *session);
-	void set_caller(struct rpc_caller_session *session);
+	crypto_client(rpc_caller_session *session = NULL);
+	void set_caller(rpc_caller_session *session);
 
-	struct service_client m_client;
+	service_client m_client;
 };
 
 #endif /* CRYPTO_CLIENT_H */
