@@ -51,7 +51,7 @@ To build and run tests for the Crypto API, enter the following (use the same flo
 
   cmake -B build-pa deployments/psa-api-test/crypto/linux-pc
   make -C build-pa install
-  LD_LIBRARY_PATH=build-ts/install/linux-pc/lib build-pa/install/linux-pc/bin/psa-crypto-api-test
+  LD_LIBRARY_PATH=build-pa/install/linux-pc/lib build-pa/install/linux-pc/bin/psa-crypto-api-test
 
 psa-api test binaries accept the listed command-line arguments:
 
