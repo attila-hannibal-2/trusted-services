@@ -60,9 +60,9 @@ Build SPMC tests
 
 Trusted Services includes S-EL0 tests SPs for validating the SPMC's behavior by invoking various FF-A interfaces. These tests
 require OP-TEE's `xtest`_ for starting them from the normal world. ``xtest`` uses ``linux-arm-ffa-user`` for accessing the
-FF-A layer. Building the SPMC tests uses the same build system but with the ``SPMC_TEST=y`` configuration::
+FF-A layer. Building the SPMC tests uses the same build system but with the ``SPMC_TESTS=y`` configuration::
 
-  make -C build SPMC_TEST=y all
+  make -C build SPMC_TESTS=y all
 
 .. note::
   This build configuration only contains the SPMC test SPs and it does not include any of the :ref:`Services`.
