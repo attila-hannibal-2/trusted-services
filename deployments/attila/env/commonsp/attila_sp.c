@@ -80,21 +80,25 @@ void sp_main(union ffa_boot_info *boot_info)
 		EMSG("Failed to initialize RPC endpoint: %d", rpc_status);
 		goto fatal_error;
 	}
+	DMSG("ts_rpc_endpoint_sp_init ok status:%d", rpc_status);
 
 	rpc_status = ts_rpc_endpoint_sp_add_service(&rpc_endpoint, attila_iface);
 	if (rpc_status != RPC_SUCCESS) {
 		EMSG("Failed to add service to RPC endpoint: %d", rpc_status);
 		goto fatal_error;
 	}
+	DMSG("ts_rpc_endpoint_sp_add_service ok status:%d", rpc_status);
 
 	result = sp_msg_wait(&req_msg);
 	if (result != SP_RESULT_OK) {
 		EMSG("Failed to send message wait %d", result);
 		goto fatal_error;
 	}
+	DMSG("sp_msg_wait ok status:%d", result);
 
 	while (1) {
 		ts_rpc_endpoint_sp_receive(&rpc_endpoint, &req_msg, &resp_msg);
+		DMSG("ts_rpc_endpoint_sp_receive....");
 
 		result = sp_msg_send_direct_resp(&resp_msg, &req_msg);
 		if (result != SP_RESULT_OK) {
@@ -105,6 +109,7 @@ void sp_main(union ffa_boot_info *boot_info)
 				goto fatal_error;
 			}
 		}
+		DMSG("sp_msg_send_direct_resp result:%d", result);
 	}
 
 fatal_error:

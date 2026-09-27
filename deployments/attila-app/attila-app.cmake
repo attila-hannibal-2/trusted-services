@@ -20,8 +20,9 @@ if (COVERAGE)
 	set(LIBTS_BUILD_TYPE "DEBUGCOVERAGE" CACHE STRING "Libts build type" FORCE)
 endif()
 
-include(${TS_ROOT}/deployments/libpsats/libpsats-import.cmake)
-target_link_libraries(attila-app PRIVATE libpsats::psats)
+include(${TS_ROOT}/deployments/libts/libts-import.cmake)
+target_link_libraries(attila-app PRIVATE libts::ts )
+
 
 #-------------------------------------------------------------------------------
 #  Common main for all deployments
