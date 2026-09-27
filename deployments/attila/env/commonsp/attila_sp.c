@@ -7,6 +7,7 @@
 #include "common/utils/include/util.h"
 #include "components/rpc/common/endpoint/rpc_service_interface.h"
 #include "components/rpc/ts_rpc/endpoint/sp/ts_rpc_endpoint_sp.h"
+#include "components/service/common/provider/service_provider.h"
 #include "components/service/log/factory/log_factory.h"
 #include "sp_api.h"
 #include "sp_discovery.h"
@@ -23,18 +24,32 @@ static uint8_t rx_buffer[4096] __aligned(4096);
 		0x44, 0x44, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, \
 	}
 
+#define TS_ATTILA_OPCODE_BASE (0x0100)
+#define TS_ATTILA_SAY_HELLO   (TS_ATTILA_OPCODE_BASE + 1)
+
+static rpc_status_t say_hello_handler(void *context, struct rpc_request *req);
+
+static const struct service_handler handler_table[] = { { TS_ATTILA_SAY_HELLO,
+							  say_hello_handler } };
+
+static rpc_status_t say_hello_handler(void *context, struct rpc_request *req)
+{
+	DMSG("say_hello_handler calles");
+	return RPC_SUCCESS;
+}
+
 void sp_main(union ffa_boot_info *boot_info)
 {
 	sp_result result = SP_RESULT_INTERNAL_ERROR;
-	//struct rpc_service_interface *secure_storage_iface = NULL;
 	struct ts_rpc_endpoint_sp rpc_endpoint = { 0 };
 	struct sp_msg req_msg = { 0 };
 	struct sp_msg resp_msg = { 0 };
-	//struct secure_storage_provider secure_storage_provider = { 0 };
-	//struct storage_backend *storage_backend = NULL;
 	uint16_t own_id = 0;
-	//const struct rpc_uuid service_uuid = { .uuid = TS_ATTILA_UUID };
-	//rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
+	const struct rpc_uuid service_uuid = { .uuid = TS_ATTILA_UUID };
+	rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
+	struct rpc_service_interface *attila_iface = NULL;
+	struct service_provider provider;
+	void *context = NULL;
 
 	/* Boot */
 	UNUSED_VAR(boot_info);
@@ -48,25 +63,17 @@ void sp_main(union ffa_boot_info *boot_info)
 	IMSG("Start discovering logging service");
 	log_factory_create();
 	DMSG("Attila SP init starts...");
+	DMSG("Build date:%s - %s", __DATE__, __TIME__);
 	result = sp_discovery_own_id_get(&own_id);
 	if (result != SP_RESULT_OK) {
 		EMSG("Failed to query own ID: %d", result);
 		goto fatal_error;
 	}
 	DMSG("Own id:%d", own_id);
-	/*
-	storage_backend = storage_factory_create(storage_factory_security_class_PROTECTED);
-	if (!storage_backend) {
-		EMSG("Failed to create storage backend");
-		goto fatal_error;
-	}
+	service_provider_init(&provider, context, &service_uuid, handler_table,
+			      ARRAY_SIZE(handler_table));
 
-	secure_storage_iface = secure_storage_provider_init(&secure_storage_provider,
-							    storage_backend, &service_uuid);
-	if (!secure_storage_iface) {
-		EMSG("Failed to init secure storage provider");
-		goto fatal_error;
-	}
+	attila_iface = service_provider_get_rpc_interface(&provider);
 
 	rpc_status = ts_rpc_endpoint_sp_init(&rpc_endpoint, 1, 16);
 	if (rpc_status != RPC_SUCCESS) {
@@ -74,19 +81,18 @@ void sp_main(union ffa_boot_info *boot_info)
 		goto fatal_error;
 	}
 
-	rpc_status = ts_rpc_endpoint_sp_add_service(&rpc_endpoint, secure_storage_iface);
+	rpc_status = ts_rpc_endpoint_sp_add_service(&rpc_endpoint, attila_iface);
 	if (rpc_status != RPC_SUCCESS) {
 		EMSG("Failed to add service to RPC endpoint: %d", rpc_status);
 		goto fatal_error;
 	}
-
 
 	result = sp_msg_wait(&req_msg);
 	if (result != SP_RESULT_OK) {
 		EMSG("Failed to send message wait %d", result);
 		goto fatal_error;
 	}
-*/
+
 	while (1) {
 		ts_rpc_endpoint_sp_receive(&rpc_endpoint, &req_msg, &resp_msg);
 
@@ -103,7 +109,7 @@ void sp_main(union ffa_boot_info *boot_info)
 
 fatal_error:
 	/* SP is not viable */
-	EMSG("PS SP error");
+	EMSG("Attila SP error");
 	while (1) {
 	}
 }
