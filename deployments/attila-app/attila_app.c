@@ -13,18 +13,6 @@
 #include "components/service/attila/provider/attila_uuid.h"
 #include "components/service/locator/interface/service_locator.h"
 #include "protocols/rpc/common/packed-c/status.h"
-#define TRACE_LEVEL TRACE_LEVEL_DEBUG
-//todo: not used yet:
-#define TRACE_PREFIX "Attila-APP"
-#include "trace.h"
-
-struct __attribute__((__packed__)) msg_request {
-	uint64_t msg_length;
-	char msg[];
-};
-
-#define TS_ATTILA_OPCODE_BASE (0x0100)
-#define TS_ATTILA_SAY_HELLO   (TS_ATTILA_OPCODE_BASE + 1)
 
 int main(int argc, char *argv[])
 {
@@ -34,26 +22,26 @@ int main(int argc, char *argv[])
 	size_t request_length = 0;
 	size_t response_length = 0;
 	size_t msg_length = 0;
-	struct msg_request *request_desc = NULL;
+	struct attila_message *request_desc = NULL;
 	const char *msg = "mira-cica";
 	rpc_status_t rpc_status = TS_RPC_CALL_ACCEPTED;
 	service_status_t service_status;
 	struct service_context *context = NULL;
 	struct rpc_caller_session *rpc_session = NULL;
 
-	IMSG("Starting main entry point");
+	printf("Starting main entry point\n");
 	service_locator_init();
-	DMSG("Querying service via service_locator...");
+	printf("Querying service via service_locator...\n");
 	context = service_locator_query("sn:trustedfirmware.org:attila:0");
 
 	if (!context) {
-		EMSG("Failed to discover service");
+		printf("ERROR Failed to discover service\n");
 		return 1;
 	}
-	DMSG("Open service context...");
+	printf("Open service context...\n");
 	rpc_session = service_context_open(context);
 	if (!rpc_session) {
-		EMSG("Failed to get RPC session\n");
+		printf("ERROR Failed to get RPC session\n");
 		return 1;
 	}
 
@@ -67,26 +55,26 @@ int main(int argc, char *argv[])
 
 	handle = rpc_caller_session_begin(rpc_session, &request, request_length, 0);
 	if (handle) {
-		request_desc = (struct msg_request *)request;
+		request_desc = (struct attila_message *)request;
 		memcpy(&request_desc->msg, msg, msg_length);
 		request_desc->msg_length = msg_length;
-		DMSG("Calling RPC invoke...");
+		printf("Calling RPC invoke...\n");
 		rpc_status = rpc_caller_session_invoke(handle, TS_ATTILA_SAY_HELLO, &response,
 						       &response_length, &service_status);
-		IMSG("RPC invoke finished rpc_status:%d", rpc_status);
+		printf("RPC invoke finished rpc_status:%d\n", rpc_status);
 		rpc_caller_session_end(handle);
 	} else {
-		EMSG("Failed to get RPC handle");
+		printf("ERROR Failed to get RPC handle\n");
 	}
 
-	DMSG("Clean up resources...");
+	printf("Clean up resources...\n");
 	service_context_close(context, rpc_session);
 	rpc_session = NULL;
 
 	service_context_relinquish(context);
 	context = NULL;
 
-	IMSG("App finished");
+	printf("App finished\n");
 
 	return 0;
 }

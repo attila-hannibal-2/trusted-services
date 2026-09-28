@@ -13,6 +13,15 @@ extern "C" {
 		0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33, \
 		0x44, 0x44, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, \
 	}
+
+struct __attribute__((__packed__)) attila_message {
+	uint64_t msg_length;
+	char msg[];
+};
+
+#define TS_ATTILA_OPCODE_BASE (0x0100)
+#define TS_ATTILA_SAY_HELLO   (TS_ATTILA_OPCODE_BASE + 1)
+
 #ifdef __cplusplus
 }
 #endif

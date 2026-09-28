@@ -7,8 +7,10 @@
 #include "common/utils/include/util.h"
 #include "components/rpc/common/endpoint/rpc_service_interface.h"
 #include "components/rpc/ts_rpc/endpoint/sp/ts_rpc_endpoint_sp.h"
+#include "components/service/attila/provider/attila_uuid.h"
 #include "components/service/common/provider/service_provider.h"
 #include "components/service/log/factory/log_factory.h"
+#include "protocols/rpc/common/packed-c/status.h"
 #include "sp_api.h"
 #include "sp_discovery.h"
 #include "sp_messaging.h"
@@ -18,15 +20,6 @@
 static uint8_t tx_buffer[4096] __aligned(4096);
 static uint8_t rx_buffer[4096] __aligned(4096);
 
-#define TS_ATTILA_UUID                                          \
-	{                                                       \
-		0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33, \
-		0x44, 0x44, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, \
-	}
-
-#define TS_ATTILA_OPCODE_BASE (0x0100)
-#define TS_ATTILA_SAY_HELLO   (TS_ATTILA_OPCODE_BASE + 1)
-
 static rpc_status_t say_hello_handler(void *context, struct rpc_request *req);
 
 static const struct service_handler handler_table[] = { { TS_ATTILA_SAY_HELLO,
@@ -35,6 +28,32 @@ static const struct service_handler handler_table[] = { { TS_ATTILA_SAY_HELLO,
 static rpc_status_t say_hello_handler(void *context, struct rpc_request *req)
 {
 	DMSG("say_hello_handler called");
+
+	//struct service_provider *this_context = (struct service_provider *)context;
+	struct attila_message *message = NULL;
+	size_t request_data_length = 0;
+
+	/* Checking if the descriptor fits into the request buffer */
+	if (req->request.data_length < sizeof(struct attila_message))
+		return TS_RPC_ERROR_INVALID_REQ_BODY;
+
+	message = (struct attila_message *)(req->request.data);
+
+	/* Checking for overflow */
+	if (ADD_OVERFLOW(sizeof(*message), message->msg_length, &request_data_length))
+		return TS_RPC_ERROR_INVALID_REQ_BODY;
+
+	/* Checking if descriptor and data fits into the request buffer */
+	if (req->request.data_length < request_data_length)
+		return TS_RPC_ERROR_INVALID_REQ_BODY;
+
+	/* Make sure it is null terminated */
+	if (message->msg_length != 0)
+		message->msg[message->msg_length - 1] = '\0';
+
+	DMSG("Message length:%ld, content:'%s'", message->msg_length, message->msg);
+	req->service_status = LOG_STATUS_SUCCESS;
+
 	return RPC_SUCCESS;
 }
 
