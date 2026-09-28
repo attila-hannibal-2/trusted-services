@@ -34,7 +34,7 @@ static const struct service_handler handler_table[] = { { TS_ATTILA_SAY_HELLO,
 
 static rpc_status_t say_hello_handler(void *context, struct rpc_request *req)
 {
-	DMSG("say_hello_handler calles");
+	DMSG("say_hello_handler called");
 	return RPC_SUCCESS;
 }
 
@@ -49,7 +49,6 @@ void sp_main(union ffa_boot_info *boot_info)
 	rpc_status_t rpc_status = RPC_ERROR_INTERNAL;
 	struct rpc_service_interface *attila_iface = NULL;
 	struct service_provider provider;
-	void *context = NULL;
 
 	/* Boot */
 	UNUSED_VAR(boot_info);
@@ -70,7 +69,8 @@ void sp_main(union ffa_boot_info *boot_info)
 		goto fatal_error;
 	}
 	DMSG("Own id:%d", own_id);
-	service_provider_init(&provider, context, &service_uuid, handler_table,
+	// Attila: provider and context are the same???
+	service_provider_init(&provider, &provider, &service_uuid, handler_table,
 			      ARRAY_SIZE(handler_table));
 
 	attila_iface = service_provider_get_rpc_interface(&provider);
@@ -98,7 +98,8 @@ void sp_main(union ffa_boot_info *boot_info)
 
 	while (1) {
 		ts_rpc_endpoint_sp_receive(&rpc_endpoint, &req_msg, &resp_msg);
-		DMSG("ts_rpc_endpoint_sp_receive....");
+		DMSG("ts_rpc_endpoint_sp_receive src:%d, dst:%d", req_msg.source_id,
+		     req_msg.destination_id);
 
 		result = sp_msg_send_direct_resp(&resp_msg, &req_msg);
 		if (result != SP_RESULT_OK) {

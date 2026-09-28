@@ -23,7 +23,7 @@ set(SP_FFA_UUID_CANON "${TS_RPC_UUID_CANON}")
 
 set(SP_HEAP_SIZE "32 * 1024" CACHE STRING "SP heap size in bytes")
 set(SP_BOOT_ORDER "5" CACHE STRING "Boot order of the SP")
-set(TRACE_PREFIX "ATTILA" CACHE STRING "Trace prefix")
+set(TRACE_PREFIX "Attila-SP" CACHE STRING "Trace prefix")
 set(TRACE_LEVEL "TRACE_LEVEL_DEBUG" CACHE STRING "Trace level")
 
 target_include_directories(attila PRIVATE

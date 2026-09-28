@@ -11,14 +11,6 @@
 #  client application.
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-#  Use libpsats for locating PSA services. An appropriate version of
-#  libpsats will be imported for the environment.
-#-------------------------------------------------------------------------------
-if (COVERAGE)
-	set(LIBPSATS_BUILD_TYPE "DEBUGCOVERAGE" CACHE STRING "Libpsats build type" FORCE)
-	set(LIBTS_BUILD_TYPE "DEBUGCOVERAGE" CACHE STRING "Libts build type" FORCE)
-endif()
 
 include(${TS_ROOT}/deployments/libts/libts-import.cmake)
 target_link_libraries(attila-app PRIVATE libts::ts )
@@ -36,12 +28,6 @@ target_sources(attila-app PRIVATE
 #  Components that are common across all deployments
 #
 #-------------------------------------------------------------------------------
-add_components(
-	TARGET "attila-app"
-	BASE_DIR ${TS_ROOT}
-	COMPONENTS
-		"components/app/attila-app"
-)
 
 #-------------------------------------------------------------------------------
 #  Define install content.
