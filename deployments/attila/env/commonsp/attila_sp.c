@@ -16,6 +16,7 @@
 #include "sp_messaging.h"
 #include "sp_rxtx.h"
 #include "trace.h"
+#include <string.h>
 
 static uint8_t tx_buffer[4096] __aligned(4096);
 static uint8_t rx_buffer[4096] __aligned(4096);
@@ -29,30 +30,47 @@ static rpc_status_t say_hello_handler(void *context, struct rpc_request *req)
 {
 	DMSG("say_hello_handler called");
 
-	//struct service_provider *this_context = (struct service_provider *)context;
-	struct attila_message *message = NULL;
+	struct rpc_buffer *req_buf = &req->request;
+	struct rpc_buffer *resp_buf = &req->response;
+	struct attila_message *req_message = (struct attila_message *)(req_buf->data);
+	struct attila_message *resp_message = (struct attila_message *)(resp_buf->data);
 	size_t request_data_length = 0;
+	const char greeting[] = "Hello ";
+	const size_t greeting_length = sizeof(greeting) -1; //"compile time" strlen() 
 
-	/* Checking if the descriptor fits into the request buffer */
-	if (req->request.data_length < sizeof(struct attila_message))
+	if(!req_buf || !req_message){
 		return TS_RPC_ERROR_INVALID_REQ_BODY;
-
-	message = (struct attila_message *)(req->request.data);
+	}
 
 	/* Checking for overflow */
-	if (ADD_OVERFLOW(sizeof(*message), message->msg_length, &request_data_length))
+	if (ADD_OVERFLOW(sizeof(*req_message), req_message->msg_length, &request_data_length)){
 		return TS_RPC_ERROR_INVALID_REQ_BODY;
+	}
 
-	/* Checking if descriptor and data fits into the request buffer */
-	if (req->request.data_length < request_data_length)
+	/* Checking if message and data fits into the request buffer */
+	if (req_buf->data_length < request_data_length){
 		return TS_RPC_ERROR_INVALID_REQ_BODY;
+	}
 
-	/* Make sure it is null terminated */
-	if (message->msg_length != 0)
-		message->msg[message->msg_length - 1] = '\0';
+	DMSG("Incoming message length:%ld, content:'%s'", req_message->msg_length, req_message->msg);
+	uint64_t incoming_msg_length = req_message->msg_length;
 
-	DMSG("Message length:%ld, content:'%s'", message->msg_length, message->msg);
-	req->service_status = LOG_STATUS_SUCCESS;
+	// Attila : the two buffers (req->request and req->response) points to the same address: 0x40027000
+	// that means when constucting the response (buffer) it overwrites the input (buffer)
+	// question: why?
+	
+	// first move the input to end to have space for the greetings
+	memmove(resp_message->msg + greeting_length, req_message->msg, incoming_msg_length);
+	// second insert the greating
+	memcpy(resp_message->msg, greeting, greeting_length);
+	
+	uint64_t outgoing_msg_length = greeting_length + incoming_msg_length;
+	resp_message->msg_length = outgoing_msg_length;
+	resp_buf->data_length = sizeof(resp_message->msg_length) + outgoing_msg_length;
+
+	DMSG("Outgoing attila message length:%ld, content:'%s'", resp_message->msg_length, resp_message->msg);
+	DMSG("Outgoing RPC message length:%ld", resp_buf->data_length);
+	req->service_status = RPC_SUCCESS;
 
 	return RPC_SUCCESS;
 }
@@ -141,21 +159,21 @@ fatal_error:
 
 void sp_interrupt_handler(uint32_t interrupt_id)
 {
-	(void)interrupt_id;
+	UNUSED_VAR(interrupt_id);
 }
 
 ffa_result ffa_vm_created_handler(uint16_t vm_id, uint64_t handle)
 {
-	(void)vm_id;
-	(void)handle;
+	UNUSED_VAR(vm_id);
+	UNUSED_VAR(handle);
 
 	return FFA_OK;
 }
 
 ffa_result ffa_vm_destroyed_handler(uint16_t vm_id, uint64_t handle)
 {
-	(void)vm_id;
-	(void)handle;
+	UNUSED_VAR(vm_id);
+	UNUSED_VAR(handle);
 
 	return FFA_OK;
 }

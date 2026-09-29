@@ -13,6 +13,7 @@
 #include "components/service/attila/provider/attila_uuid.h"
 #include "components/service/locator/interface/service_locator.h"
 #include "protocols/rpc/common/packed-c/status.h"
+#include "trace.h"
 
 int main(int argc, char *argv[])
 {
@@ -22,59 +23,62 @@ int main(int argc, char *argv[])
 	size_t request_length = 0;
 	size_t response_length = 0;
 	size_t msg_length = 0;
-	struct attila_message *request_desc = NULL;
-	const char *msg = "mira-cica";
+	struct attila_message *req_message = NULL;
+	const char *msg = "Mira and Lola";
 	rpc_status_t rpc_status = TS_RPC_CALL_ACCEPTED;
 	service_status_t service_status;
 	struct service_context *context = NULL;
 	struct rpc_caller_session *rpc_session = NULL;
 
-	printf("Starting main entry point\n");
+	IMSG("Starting main entry point");
 	service_locator_init();
-	printf("Querying service via service_locator...\n");
+	DMSG("Querying service via service_locator...");
 	context = service_locator_query("sn:trustedfirmware.org:attila:0");
 
 	if (!context) {
-		printf("ERROR Failed to discover service\n");
+		EMSG("ERROR Failed to discover service");
 		return 1;
 	}
-	printf("Open service context...\n");
+	DMSG("Open service context...");
 	rpc_session = service_context_open(context);
 	if (!rpc_session) {
-		printf("ERROR Failed to get RPC session\n");
+		EMSG("ERROR Failed to get RPC session");
 		return 1;
 	}
 
 	msg_length = strlen(msg);
 
+	//closing '\0' character
 	if (ADD_OVERFLOW(msg_length, 1, &msg_length))
 		return 2;
 
-	if (ADD_OVERFLOW(sizeof(*request_desc), msg_length, &request_length))
+	if (ADD_OVERFLOW(sizeof(*req_message), msg_length, &request_length))
 		return 3;
 
-	handle = rpc_caller_session_begin(rpc_session, &request, request_length, 0);
+	handle = rpc_caller_session_begin(rpc_session, &request, request_length, 128);
 	if (handle) {
-		request_desc = (struct attila_message *)request;
-		memcpy(&request_desc->msg, msg, msg_length);
-		request_desc->msg_length = msg_length;
-		printf("Calling RPC invoke...\n");
+		req_message = (struct attila_message *)request;
+		memcpy(&req_message->msg, msg, msg_length);
+		req_message->msg_length = msg_length;
+		IMSG("Calling RPC invoke...");
 		rpc_status = rpc_caller_session_invoke(handle, TS_ATTILA_SAY_HELLO, &response,
 						       &response_length, &service_status);
-		printf("RPC invoke finished rpc_status:%d\n", rpc_status);
+		IMSG("RPC invoke finished rpc_status:%d", rpc_status);
+		struct attila_message *resp_message = (struct attila_message *)(response);
+		IMSG("RPC response length:%ld content:'%s'", resp_message->msg_length, resp_message->msg);
 		rpc_caller_session_end(handle);
 	} else {
-		printf("ERROR Failed to get RPC handle\n");
+		EMSG("ERROR Failed to get RPC handle");
 	}
 
-	printf("Clean up resources...\n");
+	DMSG("Clean up resources...");
 	service_context_close(context, rpc_session);
 	rpc_session = NULL;
 
 	service_context_relinquish(context);
 	context = NULL;
 
-	printf("App finished\n");
+	DMSG("App finished");
 
 	return 0;
 }
