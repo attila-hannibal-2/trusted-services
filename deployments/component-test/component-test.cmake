@@ -28,6 +28,7 @@ add_components(
 	COMPONENTS
 		"components/app/ts-demo"
 		"components/app/ts-demo/test"
+		"components/app/attila-say-hello/test"
 		"components/common/utils"
 		"components/common/uuid"
 		"components/common/uuid/test"

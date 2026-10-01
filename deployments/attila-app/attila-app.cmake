@@ -47,6 +47,7 @@ add_components(
 	TARGET "attila-app"
 	BASE_DIR ${TS_ROOT}
 	COMPONENTS
+		"components/app/attila-say-hello"
 		"components/common/utils"
 		"components/common/trace"
 		"components/rpc/common/caller"
