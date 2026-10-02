@@ -8,9 +8,11 @@
 #include <CppUTestExt/MockSupport.h>
 #include <mock_assert.h>
 #include <cstdint>
+#include <cstring>
 
 #include <app/attila-say-hello/attila_say_hello.h>
 #include "components/service/attila/provider/attila_uuid.h"
+#include "rpc_interface_mock.h"
 
 TEST_GROUP(AttilaSayHelloTests)
 {
@@ -52,6 +54,7 @@ TEST(AttilaSayHelloTests, OK)
 
 	int ret = run_attila_say_hello();
     CHECK_EQUAL(0, ret);
+    check_request("Mira and Lola", strlen("Mira and Lola") + 1);
 }
 
 TEST(AttilaSayHelloTests, NOK)
